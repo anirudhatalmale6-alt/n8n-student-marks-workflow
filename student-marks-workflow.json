@@ -1,0 +1,224 @@
+{
+  "name": "Student Marks Retrieval System",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Student Marks Lookup",
+        "formDescription": "Enter your details to view student marks",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Student Name",
+              "fieldType": "text",
+              "requiredField": true,
+              "placeholder": "Enter student name"
+            },
+            {
+              "fieldLabel": "Student ID",
+              "fieldType": "text",
+              "requiredField": true,
+              "placeholder": "Enter student ID (e.g., STU101)"
+            },
+            {
+              "fieldLabel": "Mobile Number",
+              "fieldType": "number",
+              "requiredField": true,
+              "placeholder": "Enter mobile number"
+            }
+          ]
+        },
+        "options": {
+          "respondWithOptions": {
+            "values": {
+              "respondWith": "text",
+              "formSubmittedText": "Processing your request..."
+            }
+          }
+        }
+      },
+      "id": "form-trigger",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [0, 0],
+      "webhookId": "student-marks-form"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.google_sheet_id }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Sheet1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "StudentID",
+              "lookupValue": "={{ $('Form Trigger').item.json['Student ID'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "google-sheets-lookup",
+      "name": "Lookup Student in Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [220, 0],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_CREDENTIALS_ID",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "student-found-check",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-student-found",
+      "name": "Student Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the student data from Google Sheets lookup\nconst studentData = $input.first().json;\nconst formData = $('Form Trigger').first().json;\n\n// Extract marks - adjust column names to match your sheet\nconst studentName = studentData.StudentName || formData['Student Name'];\nconst studentId = studentData.StudentID;\nconst maths = studentData.Maths || 'N/A';\nconst science = studentData.Science || 'N/A';\nconst english = studentData.English || 'N/A';\nconst total = studentData.Total || (Number(maths) + Number(science) + Number(english)) || 'N/A';\n\n// Format the response message\nconst message = `\n=============================\n   STUDENT MARKS REPORT\n=============================\n\nName: ${studentName}\nID: ${studentId}\n\n-----------------------------\n         MARKS\n-----------------------------\nMaths:    ${maths}\nScience:  ${science}\nEnglish:  ${english}\n-----------------------------\nTOTAL:    ${total}\n=============================\n\nThank you for using our system!\n`;\n\nreturn {\n  json: {\n    success: true,\n    studentName,\n    studentId,\n    maths,\n    science,\n    english,\n    total,\n    formattedMessage: message,\n    htmlMessage: `\n      <html>\n      <head>\n        <style>\n          body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }\n          .card { background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }\n          h2 { color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; }\n          .info { margin: 15px 0; }\n          .label { color: #7f8c8d; font-size: 12px; }\n          .value { font-size: 18px; color: #2c3e50; font-weight: bold; }\n          .marks-table { width: 100%; margin: 20px 0; border-collapse: collapse; }\n          .marks-table td { padding: 10px; border-bottom: 1px solid #eee; }\n          .marks-table td:first-child { color: #7f8c8d; }\n          .marks-table td:last-child { text-align: right; font-weight: bold; color: #2c3e50; }\n          .total-row { background: #3498db; color: white !important; }\n          .total-row td { color: white !important; font-size: 18px; }\n        </style>\n      </head>\n      <body>\n        <div class=\"card\">\n          <h2>Student Marks Report</h2>\n          <div class=\"info\">\n            <div class=\"label\">Student Name</div>\n            <div class=\"value\">${studentName}</div>\n          </div>\n          <div class=\"info\">\n            <div class=\"label\">Student ID</div>\n            <div class=\"value\">${studentId}</div>\n          </div>\n          <table class=\"marks-table\">\n            <tr><td>Maths</td><td>${maths}</td></tr>\n            <tr><td>Science</td><td>${science}</td></tr>\n            <tr><td>English</td><td>${english}</td></tr>\n            <tr class=\"total-row\"><td>TOTAL</td><td>${total}</td></tr>\n          </table>\n        </div>\n      </body>\n      </html>\n    `\n  }\n};"
+      },
+      "id": "format-success-response",
+      "name": "Format Marks Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, -100]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.htmlMessage }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-success",
+      "name": "Show Marks to Parent",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [880, -100]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=<html>\n<head>\n  <style>\n    body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }\n    .card { background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }\n    h2 { color: #e74c3c; }\n    p { color: #7f8c8d; }\n    .student-id { font-weight: bold; color: #2c3e50; }\n  </style>\n</head>\n<body>\n  <div class=\"card\">\n    <h2>Student Not Found</h2>\n    <p>No record found for Student ID: <span class=\"student-id\">{{ $('Form Trigger').item.json['Student ID'] }}</span></p>\n    <p>Please verify the Student ID and try again.</p>\n  </div>\n</body>\n</html>",
+        "options": {
+          "responseCode": 404,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-not-found",
+      "name": "Show Error Message",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [660, 100]
+    }
+  ],
+  "connections": {
+    "Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Lookup Student in Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Student in Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Student Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Student Found?": {
+      "main": [
+        [
+          {
+            "node": "Format Marks Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Show Error Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Marks Response": {
+      "main": [
+        [
+          {
+            "node": "Show Marks to Parent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "pinData": {}
+}
