@@ -1,5 +1,5 @@
 {
-  "name": "Student Marks Retrieval System",
+  "name": "Student Marks Retrieval System with WhatsApp",
   "nodes": [
     {
       "parameters": {
@@ -21,9 +21,9 @@
             },
             {
               "fieldLabel": "Mobile Number",
-              "fieldType": "number",
+              "fieldType": "text",
               "requiredField": true,
-              "placeholder": "Enter mobile number"
+              "placeholder": "Enter 10-digit mobile number (without country code)"
             }
           ]
         },
@@ -109,7 +109,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Get the student data from Google Sheets lookup\nconst studentData = $input.first().json;\nconst formData = $('Form Trigger').first().json;\n\n// Extract marks - adjust column names to match your sheet\nconst studentName = studentData.StudentName || formData['Student Name'];\nconst studentId = studentData.StudentID;\nconst maths = studentData.Maths || 'N/A';\nconst science = studentData.Science || 'N/A';\nconst english = studentData.English || 'N/A';\nconst total = studentData.Total || (Number(maths) + Number(science) + Number(english)) || 'N/A';\n\n// Format the response message\nconst message = `\n=============================\n   STUDENT MARKS REPORT\n=============================\n\nName: ${studentName}\nID: ${studentId}\n\n-----------------------------\n         MARKS\n-----------------------------\nMaths:    ${maths}\nScience:  ${science}\nEnglish:  ${english}\n-----------------------------\nTOTAL:    ${total}\n=============================\n\nThank you for using our system!\n`;\n\nreturn {\n  json: {\n    success: true,\n    studentName,\n    studentId,\n    maths,\n    science,\n    english,\n    total,\n    formattedMessage: message,\n    htmlMessage: `\n      <html>\n      <head>\n        <style>\n          body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }\n          .card { background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }\n          h2 { color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; }\n          .info { margin: 15px 0; }\n          .label { color: #7f8c8d; font-size: 12px; }\n          .value { font-size: 18px; color: #2c3e50; font-weight: bold; }\n          .marks-table { width: 100%; margin: 20px 0; border-collapse: collapse; }\n          .marks-table td { padding: 10px; border-bottom: 1px solid #eee; }\n          .marks-table td:first-child { color: #7f8c8d; }\n          .marks-table td:last-child { text-align: right; font-weight: bold; color: #2c3e50; }\n          .total-row { background: #3498db; color: white !important; }\n          .total-row td { color: white !important; font-size: 18px; }\n        </style>\n      </head>\n      <body>\n        <div class=\"card\">\n          <h2>Student Marks Report</h2>\n          <div class=\"info\">\n            <div class=\"label\">Student Name</div>\n            <div class=\"value\">${studentName}</div>\n          </div>\n          <div class=\"info\">\n            <div class=\"label\">Student ID</div>\n            <div class=\"value\">${studentId}</div>\n          </div>\n          <table class=\"marks-table\">\n            <tr><td>Maths</td><td>${maths}</td></tr>\n            <tr><td>Science</td><td>${science}</td></tr>\n            <tr><td>English</td><td>${english}</td></tr>\n            <tr class=\"total-row\"><td>TOTAL</td><td>${total}</td></tr>\n          </table>\n        </div>\n      </body>\n      </html>\n    `\n  }\n};"
+        "jsCode": "// Get the student data from Google Sheets lookup\nconst studentData = $input.first().json;\nconst formData = $('Form Trigger').first().json;\n\n// Extract marks - adjust column names to match your sheet\nconst studentName = studentData.StudentName || formData['Student Name'];\nconst studentId = studentData.StudentID;\nconst maths = studentData.Maths || 'N/A';\nconst science = studentData.Science || 'N/A';\nconst english = studentData.English || 'N/A';\nconst total = studentData.Total || (Number(maths) + Number(science) + Number(english)) || 'N/A';\n\n// Get mobile number from form (remove leading 0 if present)\nlet mobileNumber = String(formData['Mobile Number']).replace(/^0+/, '').replace(/\\D/g, '');\n\n// Format the response message for WhatsApp\nconst whatsappMessage = `Student Marks Report\\n\\nName: ${studentName}\\nID: ${studentId}\\n\\nMaths: ${maths}\\nScience: ${science}\\nEnglish: ${english}\\n\\nTotal: ${total}\\n\\nThank you!`;\n\n// Format the response message\nconst message = `\n=============================\n   STUDENT MARKS REPORT\n=============================\n\nName: ${studentName}\nID: ${studentId}\n\n-----------------------------\n         MARKS\n-----------------------------\nMaths:    ${maths}\nScience:  ${science}\nEnglish:  ${english}\n-----------------------------\nTOTAL:    ${total}\n=============================\n\nThank you for using our system!\n`;\n\nreturn {\n  json: {\n    success: true,\n    studentName,\n    studentId,\n    maths,\n    science,\n    english,\n    total,\n    mobileNumber,\n    whatsappMessage,\n    formattedMessage: message,\n    htmlMessage: `\n      <html>\n      <head>\n        <style>\n          body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }\n          .card { background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }\n          h2 { color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; }\n          .info { margin: 15px 0; }\n          .label { color: #7f8c8d; font-size: 12px; }\n          .value { font-size: 18px; color: #2c3e50; font-weight: bold; }\n          .marks-table { width: 100%; margin: 20px 0; border-collapse: collapse; }\n          .marks-table td { padding: 10px; border-bottom: 1px solid #eee; }\n          .marks-table td:first-child { color: #7f8c8d; }\n          .marks-table td:last-child { text-align: right; font-weight: bold; color: #2c3e50; }\n          .total-row { background: #3498db; color: white !important; }\n          .total-row td { color: white !important; font-size: 18px; }\n          .whatsapp-notice { margin-top: 20px; padding: 10px; background: #25D366; color: white; border-radius: 5px; text-align: center; }\n        </style>\n      </head>\n      <body>\n        <div class=\"card\">\n          <h2>Student Marks Report</h2>\n          <div class=\"info\">\n            <div class=\"label\">Student Name</div>\n            <div class=\"value\">${studentName}</div>\n          </div>\n          <div class=\"info\">\n            <div class=\"label\">Student ID</div>\n            <div class=\"value\">${studentId}</div>\n          </div>\n          <table class=\"marks-table\">\n            <tr><td>Maths</td><td>${maths}</td></tr>\n            <tr><td>Science</td><td>${science}</td></tr>\n            <tr><td>English</td><td>${english}</td></tr>\n            <tr class=\"total-row\"><td>TOTAL</td><td>${total}</td></tr>\n          </table>\n          <div class=\"whatsapp-notice\">Marks also sent to your WhatsApp!</div>\n        </div>\n      </body>\n      </html>\n    `\n  }\n};"
       },
       "id": "format-success-response",
       "name": "Format Marks Response",
@@ -119,8 +119,31 @@
     },
     {
       "parameters": {
+        "method": "POST",
+        "url": "https://api.interakt.ai/v1/public/message/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"countryCode\": \"+91\",\n  \"phoneNumber\": \"{{ $json.mobileNumber }}\",\n  \"type\": \"Template\",\n  \"template\": {\n    \"name\": \"student_marks_report\",\n    \"languageCode\": \"en\",\n    \"bodyValues\": [\n      \"{{ $json.studentName }}\",\n      \"{{ $json.studentId }}\",\n      \"{{ $json.maths }}\",\n      \"{{ $json.science }}\",\n      \"{{ $json.english }}\",\n      \"{{ $json.total }}\"\n    ]\n  }\n}",
+        "options": {}
+      },
+      "id": "send-whatsapp-interakt",
+      "name": "Send WhatsApp via Interakt",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, -200],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "YOUR_INTERAKT_CREDENTIALS_ID",
+          "name": "Interakt API"
+        }
+      }
+    },
+    {
+      "parameters": {
         "respondWith": "text",
-        "responseBody": "={{ $json.htmlMessage }}",
+        "responseBody": "={{ $('Format Marks Response').item.json.htmlMessage }}",
         "options": {
           "responseHeaders": {
             "entries": [
@@ -136,7 +159,7 @@
       "name": "Show Marks to Parent",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [880, -100]
+      "position": [1100, -100]
     },
     {
       "parameters": {
@@ -203,6 +226,17 @@
       ]
     },
     "Format Marks Response": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp via Interakt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp via Interakt": {
       "main": [
         [
           {
